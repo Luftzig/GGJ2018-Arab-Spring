@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Definitions exposing (..)
+import Html.Attributes exposing (style)
 import Render exposing (..)
 import Html exposing (..)
 import Html.Events exposing (on)
@@ -49,7 +50,7 @@ init =
 
 view : Model -> Html Msg
 view model =
-    div [ onMouseDown model.canvasSize ]
+    div [ onMouseDown model.canvasSize, style [ ( "user-select", "none" ) ] ]
         [ renderModel model
         ]
 
