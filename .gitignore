@@ -67,3 +67,6 @@ typings/
 # IntelliJ
 *.iml
 .idea
+
+# Raw image assets
+assets/*.xcf
