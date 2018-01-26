@@ -99,6 +99,15 @@ view model = div [  ]
     ]
 
 -- No update for now...
+updateModel : Msg -> Model -> Model
+updateModel msg model =
+    case msg of
+        Tick time -> case model.drag of
+            Nothing -> model
+            Just d -> model
+
+        MouseEvent mevent -> model
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model = ( model, Cmd.none )
 

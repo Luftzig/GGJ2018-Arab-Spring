@@ -13,8 +13,7 @@ type alias Model =
     }
 
 type Msg
-    = MoveTool Position
-    | Tick Time
+    = Tick Time
     | MouseEvent MouseEvent
 
 type MouseEvent
@@ -25,7 +24,6 @@ type MouseEvent
 type alias Drag =
     { start : Position
     , current : Position
-    , time : Time
     }
 
 type alias LevelDescription =
