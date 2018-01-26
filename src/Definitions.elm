@@ -11,7 +11,12 @@ type alias Model =
     , levelState : LevelState
     , gameState : GameState
     , drag : Maybe Drag
+    , canvasSize : GameDimensions
     }
+
+
+type alias GameDimensions =
+    Dimensions
 
 
 type Msg
@@ -21,15 +26,15 @@ type Msg
 
 
 type MouseEvent
-    = DragStart Mouse.Position
-    | DragAt Mouse.Position
-    | DragEnd Mouse.Position
+    = DragStart Position
+    | DragAt Position
+    | DragEnd Position
 
 
 type alias Drag =
     { start : Position
     , current : Position
-    , time : Time
+    , tool : Tool
     }
 
 
@@ -37,7 +42,7 @@ type alias LevelDescription =
     { boundaries : Boundaries
     , obstacles : List Obstacle
     , characters : List Character
-    , tools : ToolsRestrictions
+    , tools : ToolDefinitions
     , metadata : LevelMetadata
     }
 
@@ -99,8 +104,16 @@ type alias RadioRange =
     Float
 
 
-type alias ToolsRestrictions =
-    {}
+type alias ToolDefinitions =
+    List ToolDefinition
+
+
+type alias ToolDefinition =
+    { name : String
+    , startPosition : Position
+    , toolType : ToolType
+    , nodeParameters : NodeParameters
+    }
 
 
 type alias LevelMetadata =
@@ -132,6 +145,7 @@ type alias ToolsState =
 
 type alias Tool =
     { name : String
+    , id : Id
     , toolType : ToolType
     , nodeParameters : NodeParameters
     , position : Position

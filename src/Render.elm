@@ -59,8 +59,8 @@ renderModel : Model -> Html Msg
 renderModel model =
     Element.toHtml <|
         collage
-            (round model.currentLevel.boundaries.dimensions.width)
-            (round model.currentLevel.boundaries.dimensions.height + 200)
+            (round model.canvasSize.width)
+            (round model.canvasSize.height)
             (renderBoundaries model.currentLevel.boundaries
                 :: renderToolbox model.currentLevel.boundaries
                 :: List.map renderObstacle model.currentLevel.obstacles

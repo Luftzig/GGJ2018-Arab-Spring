@@ -1,6 +1,6 @@
 module Levels exposing (..)
 
-import Definitions exposing (Boundaries, Box, Character, CharacterRole(Alice, Bob, Eve), LevelDescription, LevelMetadata, Obstacle)
+import Definitions exposing (Boundaries, Box, Character, CharacterRole(Alice, Bob, Eve), LevelDescription, LevelMetadata, Obstacle, ToolDefinition, ToolDefinitions, ToolType(Repeater))
 
 
 boundaries0 : Boundaries
@@ -56,11 +56,21 @@ metadata0 =
     }
 
 
+level1Tools : ToolDefinitions
+level1Tools =
+    [ { name = "Cheap Repeater"
+      , toolType = Repeater
+      , nodeParameters = { range = 100 }
+      , startPosition = { x = -250, y = -250 }
+      }
+    ]
+
+
 level1 : LevelDescription
 level1 =
     LevelDescription
         boundaries0
         obstacles0
         characters0
-        {}
+        level1Tools
         metadata0
