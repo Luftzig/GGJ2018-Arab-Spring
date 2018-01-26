@@ -180,9 +180,11 @@ isValidDropPosition position model =
 
         collidesWith : Position -> List Boundaries -> Bool
         collidesWith pos boundaries =
-            List.all (inBoundingBox pos) boundaries
+            List.any (inBoundingBox pos) boundaries
     in
-        inBoundingBox position model.currentLevel.boundaries && (not <| collidesWith position model.currentLevel.obstacles)
+        ((inBoundingBox position model.currentLevel.boundaries)
+            && (not <| collidesWith position model.currentLevel.obstacles)
+        )
 
 
 getOriginalToolPosition : LevelDescription -> Tool -> Position
@@ -203,15 +205,14 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     case model.drag of
         Nothing ->
-            --            Time.every millisecond Tick
-            Sub.none
+            Time.every millisecond Tick
 
+        --            Sub.none
         Just _ ->
             Sub.batch
                 [ Mouse.moves (MouseEvent << DragAt << mousePos2Pos model.canvasSize)
                 , Mouse.ups (MouseEvent << DragEnd << mousePos2Pos model.canvasSize)
-
-                --                , Time.every millisecond Tick
+                , Time.every millisecond Tick
                 ]
 
 
