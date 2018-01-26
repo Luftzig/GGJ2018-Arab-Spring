@@ -4,6 +4,7 @@ import Time exposing (Time)
 import Time exposing (Time)
 import Mouse as Mouse
 
+
 type alias Model =
     { levels : List LevelDescription
     , currentLevel : LevelDescription
@@ -12,21 +13,25 @@ type alias Model =
     , drag : Maybe Drag
     }
 
+
 type Msg
     = MoveTool Position
     | Tick Time
     | MouseEvent MouseEvent
+
 
 type MouseEvent
     = DragStart Mouse.Position
     | DragAt Mouse.Position
     | DragEnd Mouse.Position
 
+
 type alias Drag =
     { start : Position
     , current : Position
     , time : Time
     }
+
 
 type alias LevelDescription =
     { boundaries : Boundaries

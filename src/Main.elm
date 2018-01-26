@@ -2,7 +2,6 @@ module Main exposing (..)
 
 import Definitions exposing (..)
 import Render exposing (..)
-
 import Html exposing (..)
 import Html.Events exposing (on)
 import Mouse as Mouse
@@ -10,10 +9,10 @@ import Time exposing (Time, millisecond)
 import Json.Decode as Decode
 
 
-
 ---------------------------------------------------------------------------
 -- Demo -------------------------------------------------------------------
 ---------------------------------------------------------------------------
+
 
 boundaries0 : Boundaries
 boundaries0 =
@@ -21,11 +20,13 @@ boundaries0 =
     , dimensions = { width = 700, height = 400 }
     }
 
+
 obstacles0 : List Obstacle
 obstacles0 =
     [ Box { x = -350, y = -100 } { width = 300, height = 200 }
     , Box { x = 50, y = -100 } { width = 100, height = 200 }
     ]
+
 
 alice : Character
 alice =
@@ -35,6 +36,7 @@ alice =
     , node = { range = 0 }
     }
 
+
 bob : Character
 bob =
     { role = Bob
@@ -42,6 +44,7 @@ bob =
     , position = { x = -300, y = 150 }
     , node = { range = 0 }
     }
+
 
 eve : Character
 eve =
@@ -51,8 +54,11 @@ eve =
     , node = { range = 0 }
     }
 
+
 characters0 : List Character
-characters0 = [alice, bob, eve]
+characters0 =
+    [ alice, bob, eve ]
+
 
 metadata0 : LevelMetadata
 metadata0 =
@@ -60,13 +66,16 @@ metadata0 =
     , id = -1
     }
 
+
 lvlDesc : LevelDescription
-lvlDesc = LevelDescription
-    boundaries0
-    obstacles0
-    characters0
-    {}
-    metadata0
+lvlDesc =
+    LevelDescription
+        boundaries0
+        obstacles0
+        characters0
+        {}
+        metadata0
+
 
 initToolsState : ToolsState
 initToolsState =
@@ -78,43 +87,56 @@ initToolsState =
       }
     ]
 
+
 initModel : Model
 initModel =
     { levels = []
     , currentLevel = lvlDesc
-    , levelState = {time = 0, progress = Started, tools = initToolsState}
+    , levelState = { time = 0, progress = Started, tools = initToolsState }
     , gameState = { currentLevel = -1, progress = PlayingLevel (-1) }
     , drag = Nothing
     }
+
 
 init : ( Model, Cmd Msg )
 init =
     ( initModel, Cmd.none )
 
 
-
 view : Model -> Html Msg
-view model = div [  ]
-    [ renderModel model
-    ]
+view model =
+    div []
+        [ renderModel model
+        ]
+
+
 
 -- No update for now...
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model = ( model, Cmd.none )
+update msg model =
+    ( model, Cmd.none )
+
+
 
 -- No subscriptions for now...
-subscriptions : Model -> Sub Msg
-subscriptions model = case model.drag of
-    Nothing ->
-        Time.every millisecond Tick
 
-    --Sub.none
-    Just _ ->
-        Sub.batch
-            [ Mouse.moves (MouseEvent << DragAt)
-            , Mouse.ups (MouseEvent << DragEnd)
-            , Time.every millisecond Tick
-            ]
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    case model.drag of
+        Nothing ->
+            Time.every millisecond Tick
+
+        --Sub.none
+        Just _ ->
+            Sub.batch
+                [ Mouse.moves (MouseEvent << DragAt)
+                , Mouse.ups (MouseEvent << DragEnd)
+                , Time.every millisecond Tick
+                ]
+
 
 main : Program Never Model Msg
 main =
@@ -125,8 +147,11 @@ main =
         , subscriptions = subscriptions
         }
 
+
 mousePos2Pos : Mouse.Position -> Position
-mousePos2Pos p = Position (toFloat p.x) (toFloat p.y)
+mousePos2Pos p =
+    Position (toFloat p.x) (toFloat p.y)
+
 
 onMouseDown : Attribute Msg
 onMouseDown =
