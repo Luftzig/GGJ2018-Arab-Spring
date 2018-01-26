@@ -1,14 +1,32 @@
 module Definitions exposing (..)
 
 import Time exposing (Time)
+import Time exposing (Time)
+import Mouse as Mouse
 
 type alias Model =
     { levels : List LevelDescription
     , currentLevel : LevelDescription
     , levelState : LevelState
     , gameState : GameState
+    , drag : Maybe Drag
     }
 
+type Msg
+    = MoveTool Position
+    | Tick Time
+    | MouseEvent MouseEvent
+
+type MouseEvent
+    = DragStart Mouse.Position
+    | DragAt Mouse.Position
+    | DragEnd Mouse.Position
+
+type alias Drag =
+    { start : Position
+    , current : Position
+    , time : Time
+    }
 
 type alias LevelDescription =
     { boundaries : Boundaries
@@ -24,7 +42,7 @@ type alias Boundaries =
 
 
 type alias Box =
-    { topLeft : Position
+    { leftBottom : Position
     , dimensions : Dimensions
     }
 
@@ -36,8 +54,8 @@ type alias Position =
 
 
 type alias Dimensions =
-    { height : Height
-    , width : Width
+    { width : Width
+    , height : Height
     }
 
 
@@ -56,7 +74,7 @@ type alias Obstacle =
 type alias Character =
     { role : CharacterRole
     , name : String
-    , location : Position
+    , position : Position
     , node : NodeParameters
     }
 
@@ -104,13 +122,15 @@ type LevelProgress
 
 
 type alias ToolsState =
-    {}
+    List Tool
 
 
 type alias Tool =
     { name : String
     , toolType : ToolType
     , nodeParameters : NodeParameters
+    , position : Position
+    , active : Bool
     }
 
 
