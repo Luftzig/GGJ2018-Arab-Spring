@@ -5,6 +5,7 @@ import Color exposing (..)
 import Collage exposing (..)
 import Element
 import Html exposing (..)
+import Transform
 
 
 cornerToCenter : Box -> Position
@@ -28,16 +29,44 @@ renderBoundaries obj =
 
 renderObstacle : Obstacle -> Form
 renderObstacle obj =
-    rect obj.dimensions.width obj.dimensions.height
-        |> filled blue
+    -- Strange voodoo below: using stretchedImage not in a group yields wrong result
+    group
+        [ stretchedImage { width = 256, height = 256 } obj.dimensions "assets/building.png"
+        ]
         |> move (cornerToCenter obj |> posToTuple)
+
+
+stretchedImage : Dimensions -> Dimensions -> String -> Form
+stretchedImage imageSize targetSize image =
+    let
+        xRatio =
+            imageSize.width / targetSize.width
+
+        yRatio =
+            imageSize.height / targetSize.height
+    in
+        groupTransform
+            (Transform.multiply (Transform.scaleX <| 1 / xRatio) (Transform.scaleY <| 1 / yRatio))
+            [ toForm <| Element.image (round imageSize.width) (round imageSize.height) image ]
 
 
 renderCharacter : Character -> Form
 renderCharacter obj =
-    circle 25
-        |> filled red
-        |> move ( obj.position.x, obj.position.y )
+    case obj.role of
+        Alice ->
+            Element.fittedImage 40 40 "assets/router1.png"
+                |> toForm
+                |> move ( obj.position.x, obj.position.y )
+
+        Bob ->
+            Element.fittedImage 40 40 "assets/router1.png"
+                |> toForm
+                |> move ( obj.position.x, obj.position.y )
+
+        Eve ->
+            Element.fittedImage 40 40 "assets/eve_truck.png"
+                |> toForm
+                |> move ( obj.position.x, obj.position.y )
 
 
 renderToolbox : Boundaries -> Form
@@ -50,9 +79,11 @@ renderToolbox obj =
 
 renderTool : Tool -> Form
 renderTool obj =
-    ngon 3 30
-        |> filled red
-        |> move ( obj.position.x, obj.position.y )
+    case obj.toolType of
+        Repeater ->
+            Element.fittedImage 40 40 "assets/repeater2.png"
+                |> toForm
+                |> move ( obj.position.x, obj.position.y )
 
 
 renderModel : Model -> Html Msg
