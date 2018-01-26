@@ -20,8 +20,7 @@ type alias GameDimensions =
 
 
 type Msg
-    = MoveTool Position
-    | Tick Time
+    = Tick Time
     | MouseEvent MouseEvent
 
 
