@@ -114,36 +114,6 @@ puzzleSolved model =
     False
 
 
-isSource : Character -> Bool
-isSource char =
-    case char.role of
-        Alice ->
-            True
-
-        _ ->
-            False
-
-
-isAdversary : Character -> Bool
-isAdversary char =
-    case char.role of
-        Eve ->
-            True
-
-        _ ->
-            False
-
-
-isTarget : Character -> Bool
-isTarget char =
-    case char.role of
-        Bob ->
-            True
-
-        _ ->
-            False
-
-
 hasPath : List Character -> List Character -> List Tool -> List Obstacle -> Bool
 hasPath sources targets tools obstacles =
     let

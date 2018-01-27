@@ -1,6 +1,6 @@
 module Paths exposing (Edge, makeEdges)
 
-import Definitions exposing (Obstacle, Position, Positioned, HasNode)
+import Definitions exposing (HasNode, Node, Obstacle, Position, Positioned)
 import List.Extra as ListE
 import RayCasting exposing (Vector, boxWalls, doesSegmentsCross, vectSub)
 
@@ -9,10 +9,6 @@ type alias Edge =
     { start : Position
     , end : Position
     }
-
-
-type alias Node a =
-    HasNode (Positioned a)
 
 
 makeEdges : List Obstacle -> List (Node a) -> List (Node b) -> List Edge
