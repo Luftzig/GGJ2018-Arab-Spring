@@ -35,7 +35,7 @@ alice : Character
 alice =
     { role = Alice
     , name = "Alice"
-    , position = { x = -300, y = -150 }
+    , position = { x = (47 - 350), y = (-175) }
     , node = { range = 0 }
     }
 
@@ -44,7 +44,7 @@ bob : Character
 bob =
     { role = Bob
     , name = "Bob"
-    , position = { x = -300, y = 150 }
+    , position = { x = -300, y = 160 }
     , node = { range = 0 }
     }
 
