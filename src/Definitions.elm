@@ -100,6 +100,36 @@ type CharacterRole
     | Eve
 
 
+isSource : Character -> Bool
+isSource char =
+    case char.role of
+        Alice ->
+            True
+
+        _ ->
+            False
+
+
+isAdversary : Character -> Bool
+isAdversary char =
+    case char.role of
+        Eve ->
+            True
+
+        _ ->
+            False
+
+
+isTarget : Character -> Bool
+isTarget char =
+    case char.role of
+        Bob ->
+            True
+
+        _ ->
+            False
+
+
 type alias NodeParameters =
     { range : RadioRange
     }
@@ -107,6 +137,10 @@ type alias NodeParameters =
 
 type alias HasNode a =
     { a | node : NodeParameters }
+
+
+type alias Node a =
+    HasNode (Positioned a)
 
 
 type alias RadioRange =

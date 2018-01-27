@@ -6,6 +6,7 @@ import Collage exposing (..)
 import Element
 import Html exposing (..)
 import Paths exposing (Edge, makeEdges)
+import RayCasting exposing (rayAngle, rayTracing, raysPolygons)
 import Transform
 
 
@@ -98,6 +99,21 @@ renderEdges color edges =
         edges
 
 
+renderAreasOfEffect : Boundaries -> List Obstacle -> Color -> List (Node a) -> List Form
+renderAreasOfEffect boundaries obstacles color nodes =
+    nodes
+        |> List.map (renderRays boundaries obstacles color)
+        |> List.concat
+
+
+renderRays : Boundaries -> List Obstacle -> Color -> Node a -> List Form
+renderRays boundaries obstacles color node =
+    rayTracing node.position boundaries.box obstacles
+        |> List.sortBy rayAngle
+        |> raysPolygons
+        |> List.map (filled color >> alpha 0.5)
+
+
 renderModel : Model -> Html Msg
 renderModel model =
     Element.toHtml <|
@@ -106,6 +122,21 @@ renderModel model =
             (round model.canvasSize.height)
             (renderBoundaries model.currentLevel.boundaries
                 :: List.map renderObstacle model.currentLevel.obstacles
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
+                    lightOrange
+                    (List.filter .active model.levelState.tools)
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
+                    lightPurple
+                    (List.filter isAdversary model.currentLevel.characters)
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
+                    lightBlue
+                    (List.filter (not << isAdversary) model.currentLevel.characters)
                 ++ List.map renderCharacter model.currentLevel.characters
                 ++ [ renderToolbox model.currentLevel.boundaries ]
                 ++ List.map renderTool model.levelState.tools
