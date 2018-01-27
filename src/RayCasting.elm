@@ -115,6 +115,32 @@ raysToBoxCorners source box =
         List.map (\ray -> List.foldr cutRay ray walls) rawRays
 
 
+
+
+rayTracing : Position -> Box -> List Box -> List Ray
+rayTracing source boundaries obstacles =
+    let
+        maxScale =
+            boundaries.dimensions.width ^ 2 + boundaries.dimensions.height ^ 2
+
+        walls =
+            List.concat <| List.map boxWalls (boundaries::obstacles)
+
+        corners =
+            List.concat <| List.map boxCorners (boundaries::obstacles)
+
+        rawRays =
+            List.map (\dst -> lineFromPoints source dst) corners
+
+        dphi = 0.00001
+
+        extraRays =
+               List.map (\ray -> {ray | direction = vectScale maxScale <| vectRotate dphi ray.direction}) rawRays
+            ++ List.map (\ray -> {ray | direction = vectScale maxScale <| vectRotate (-dphi) ray.direction}) rawRays
+    in
+        List.map (\ray -> List.foldr cutRay ray walls) (rawRays ++ extraRays)
+
+
 vectAdd : Vector -> Vector -> Vector
 vectAdd (Vector x1 y1) (Vector x2 y2) =
     (Vector (x1 + x2) (y1 + y2))
@@ -129,6 +155,11 @@ vectScale : Float -> Vector -> Vector
 vectScale s (Vector x y) =
     Vector (s * x) (s * y)
 
+vectRotate : Float -> Vector -> Vector
+vectRotate phi (Vector x0 y0) =
+    let (r,p) = toPolar (x0, y0)
+        (x1,y1) = fromPolar (r,p + phi)
+    in Vector x1 y1
 
 lineFromPoints : Position -> Position -> Line
 lineFromPoints p1 p2 =
@@ -193,9 +224,38 @@ cutRay s r =
                 else
                     r
 
+raysPolygon : Ray -> Ray -> Shape
+raysPolygon r1 r2 =
+    let
+        ( s, p1 ) =
+            pointsFromLine r1
 
-raysPolygons : List Ray -> List Shape
-raysPolygons rays =
+        ( _, p2 ) =
+            pointsFromLine r2
+
+        sx =
+            s.x
+
+        sy =
+            s.y
+
+        rx1 =
+            p1.x
+
+        ry1 =
+            p1.y
+
+        rx2 =
+            p2.x
+
+        ry2 =
+            p2.y
+    in
+        polygon [ ( sx, sy ), ( rx1, ry1 ), ( rx2, ry2 ) ]
+
+
+raysPolygonsInternal : List Ray -> List Shape
+raysPolygonsInternal rays =
     case rays of
         [] ->
             []
@@ -203,33 +263,17 @@ raysPolygons rays =
         [ r ] ->
             []
 
-        r1 :: r2 :: rs ->
-            let
-                ( s, p1 ) =
-                    pointsFromLine r1
+        r1 :: r2 :: rs -> raysPolygon r1 r2 :: raysPolygonsInternal (r2 :: rs)
 
-                ( _, p2 ) =
-                    pointsFromLine r2
 
-                sx =
-                    s.x
-
-                sy =
-                    s.y
-
-                rx1 =
-                    p1.x
-
-                ry1 =
-                    p1.y
-
-                rx2 =
-                    p2.x
-
-                ry2 =
-                    p2.y
-            in
-                polygon [ ( sx, sy ), ( rx1, ry1 ), ( rx2, ry2 ) ] :: raysPolygons (r2 :: rs)
+raysPolygons : List Ray -> List Shape
+raysPolygons rays =
+    let hd = List.head rays
+        lt = List.head (List.reverse rays)
+        otherPolygons = raysPolygonsInternal rays
+    in case Maybe.map2 raysPolygon hd lt of
+        Nothing -> otherPolygons
+        Just p  -> p :: otherPolygons
 
 
 rayAngle : Ray -> Float
@@ -244,10 +288,22 @@ rayAngle ray =
             )
 
 
+
+
+
+-----------------------------------------------------------------------------------
+---- DEMO -------------------------------------------------------------------------
+-----------------------------------------------------------------------------------
+
 source : Position
 source =
-    Position 150 110
+    Position 150 145
 
+boundaries : Box
+boundaries =
+    { leftBottom = { x = -250, y = -250 }
+    , dimensions = { width = 500, height = 500 }
+    }
 
 box : Box
 box =
@@ -256,9 +312,9 @@ box =
     }
 
 
-rays0 : List Ray
-rays0 =
-    raysToBoxCorners source box
+rays1 : List Ray
+rays1 =
+    rayTracing source boundaries [box]
 
 
 main : Html msg
@@ -270,8 +326,8 @@ main =
             ]
                 -- ++ List.map (\p -> circle 10 |> filled red |> move (p.x, p.y)) (boxCorners box)
                 ++ List.map (\( p1, p2 ) -> traced (solid red) (segment ( p1.x, p1.y ) ( p2.x, p2.y )))
-                    (List.map pointsFromLine <| rays0)
-                ++ (List.map (\x -> x |> filled red) (raysPolygons (List.sortBy rayAngle rays0)))
+                    (List.map pointsFromLine <| rays1)
+                ++ (List.map (\x -> x |> filled red) (raysPolygons (List.sortBy rayAngle rays1)))
 
 
 
