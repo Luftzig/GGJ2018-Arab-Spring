@@ -108,7 +108,7 @@ renderAreasOfEffect boundaries obstacles color nodes =
 
 renderRays : Boundaries -> List Obstacle -> Color -> Node a -> List Form
 renderRays boundaries obstacles color node =
-    rayTracing node.position boundaries.box obstacles
+    rayTracing (Just ( node.node.range, 50 )) node.position boundaries.box obstacles
         |> List.sortBy rayAngle
         |> raysPolygons
         |> List.map (filled color >> alpha 0.5)
