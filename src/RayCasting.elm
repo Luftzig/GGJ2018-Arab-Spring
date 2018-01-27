@@ -5,8 +5,6 @@ import Collage exposing (..)
 import Element exposing (..)
 import Html exposing (..)
 
-
--- import List exposing (..)
 -- import Debug
 
 
@@ -54,6 +52,13 @@ type alias Ray =
 
 type alias Segment =
     Line
+
+
+cornerToCenter : Box -> Position
+cornerToCenter b =
+    { x = b.leftBottom.x + b.dimensions.width / 2
+    , y = b.leftBottom.y + b.dimensions.height / 2
+    }
 
 
 boxCorners : Box -> List Position
@@ -297,7 +302,8 @@ rayAngle ray =
 
 source : Position
 source =
-    Position 150 145
+    Position -200 50
+    -- Position 150 145
 
 boundaries : Box
 boundaries =
@@ -305,25 +311,37 @@ boundaries =
     , dimensions = { width = 500, height = 500 }
     }
 
-box : Box
-box =
-    { leftBottom = { x = -50, y = -75 }
-    , dimensions = { width = 100, height = 150 }
-    }
+boxes : List Box
+boxes =
+    [   { leftBottom = { x = -50, y = -75 }
+        , dimensions = { width = 100, height = 150 }
+        }
+    ,   { leftBottom = { x = -150, y = 75 }
+        , dimensions = { width = 10, height = 15 }
+        }
+    ]
 
 
 rays1 : List Ray
 rays1 =
-    rayTracing source boundaries [box]
+    rayTracing source boundaries boxes
 
+renderBox : Box -> Form
+renderBox box =
+    let p = cornerToCenter box
+        x = p.x
+        y = p.y
+        w = box.dimensions.width
+        h = box.dimensions.height
+    in rect w h |> filled blue |> move (x,y)
 
 main : Html msg
 main =
     toHtml <|
         collage 500 500 <|
-            [ rect 100 150 |> filled blue
-            , circle 10 |> filled red |> move ( source.x, source.y )
+            [ circle 10 |> filled red |> move ( source.x, source.y )
             ]
+                ++ List.map renderBox boxes
                 -- ++ List.map (\p -> circle 10 |> filled red |> move (p.x, p.y)) (boxCorners box)
                 ++ List.map (\( p1, p2 ) -> traced (solid red) (segment ( p1.x, p1.y ) ( p2.x, p2.y )))
                     (List.map pointsFromLine <| rays1)
