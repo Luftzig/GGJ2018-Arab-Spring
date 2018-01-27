@@ -5,6 +5,7 @@ import Collage exposing (..)
 import Element exposing (..)
 import Html exposing (..)
 
+
 -- import Debug
 
 
@@ -320,7 +321,10 @@ rayAngle ray =
 source : Position
 source =
     Position -200 50
-    -- Position 150 145
+
+
+
+-- Position 150 145
 
 
 boundaries : Box
@@ -329,14 +333,15 @@ boundaries =
     , dimensions = { width = 500, height = 500 }
     }
 
+
 boxes : List Box
 boxes =
-    [   { leftBottom = { x = -50, y = -75 }
-        , dimensions = { width = 100, height = 150 }
-        }
-    ,   { leftBottom = { x = -150, y = 75 }
-        , dimensions = { width = 10, height = 15 }
-        }
+    [ { leftBottom = { x = -50, y = -75 }
+      , dimensions = { width = 100, height = 150 }
+      }
+    , { leftBottom = { x = -150, y = 75 }
+      , dimensions = { width = 10, height = 15 }
+      }
     ]
 
 
@@ -344,14 +349,27 @@ rays1 : List Ray
 rays1 =
     rayTracing source boundaries boxes
 
+
 renderBox : Box -> Form
 renderBox box =
-    let p = cornerToCenter box
-        x = p.x
-        y = p.y
-        w = box.dimensions.width
-        h = box.dimensions.height
-    in rect w h |> filled blue |> move (x,y)
+    let
+        p =
+            cornerToCenter box
+
+        x =
+            p.x
+
+        y =
+            p.y
+
+        w =
+            box.dimensions.width
+
+        h =
+            box.dimensions.height
+    in
+        rect w h |> filled blue |> move ( x, y )
+
 
 main : Html msg
 main =
