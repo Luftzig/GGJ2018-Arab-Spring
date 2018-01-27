@@ -107,7 +107,7 @@ renderEdges color edges =
     List.map
         (\e ->
             segment ( e.start.x, e.start.y ) ( e.end.x, e.end.y )
-                |> traced (solid color)
+                |> traced { color = color, width = 2, cap = Round, join = Smooth, dashing = [ 3, 3 ], dashOffset = 0 }
         )
         edges
 

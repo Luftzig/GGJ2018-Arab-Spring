@@ -87,6 +87,11 @@ level1Tools =
       , nodeParameters = { range = 250 }
       , startPosition = { x = -150, y = -250 }
       }
+    , { name = "Lousy Repeater"
+      , toolType = Repeater
+      , nodeParameters = { range = 250 }
+      , startPosition = { x = -150, y = -250 }
+      }
     ]
 
 
