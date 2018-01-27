@@ -152,9 +152,12 @@ rayTracing sunParams source boundaries obstacles =
                     createSun radius nRays source
     in
         List.map (\ray -> List.foldr cutRay ray walls) (rawRays ++ extraRays ++ sunRays)
-        |> case sunParams of
-            Nothing -> identity
-            Just (radius, nRays) -> List.map (cutRayAtRadius radius)
+            |> case sunParams of
+                Nothing ->
+                    identity
+
+                Just ( radius, nRays ) ->
+                    List.map (cutRayAtRadius radius)
 
 
 vectAdd : Vector -> Vector -> Vector
