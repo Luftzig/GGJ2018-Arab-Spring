@@ -74,23 +74,18 @@ level1Tools : ToolDefinitions
 level1Tools =
     [ { name = "Cheap Repeater"
       , toolType = Repeater
-      , nodeParameters = { range = 300 }
+      , nodeParameters = { range = 400 }
       , startPosition = { x = -250, y = -250 }
       }
     , { name = "Cheap Repeater"
       , toolType = Repeater
-      , nodeParameters = { range = 300 }
+      , nodeParameters = { range = 400 }
       , startPosition = { x = -250, y = -250 }
       }
     , { name = "Lousy Repeater"
       , toolType = Repeater
-      , nodeParameters = { range = 200 }
-      , startPosition = { x = -200, y = -250 }
-      }
-    , { name = "Lousy Repeater"
-      , toolType = Repeater
-      , nodeParameters = { range = 200 }
-      , startPosition = { x = -200, y = -250 }
+      , nodeParameters = { range = 250 }
+      , startPosition = { x = -150, y = -250 }
       }
     ]
 

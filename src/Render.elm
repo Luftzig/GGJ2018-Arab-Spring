@@ -7,6 +7,7 @@ import Element
 import Html exposing (..)
 import Paths exposing (Edge, makeEdges)
 import RayCasting exposing (rayAngle, rayTracing, raysPolygons)
+import Text
 import Transform
 
 
@@ -57,18 +58,27 @@ renderCharacter : Character -> Form
 renderCharacter obj =
     case obj.role of
         Alice ->
-            Element.fittedImage 40 40 "assets/router1.png"
-                |> toForm
+            group
+                [ Element.fittedImage 64 64 "assets/router1.png"
+                    |> toForm
+                , Collage.text (Text.fromString obj.name |> Text.height 14 |> Text.color darkRed) |> move ( -12, 24 )
+                ]
                 |> move ( obj.position.x, obj.position.y )
 
         Bob ->
-            Element.fittedImage 40 40 "assets/router1.png"
-                |> toForm
+            group
+                [ Element.fittedImage 64 64 "assets/router1.png"
+                    |> toForm
+                , Collage.text (Text.fromString obj.name |> Text.height 14 |> Text.color darkRed) |> move ( -12, 24 )
+                ]
                 |> move ( obj.position.x, obj.position.y )
 
         Eve ->
-            Element.fittedImage 40 40 "assets/eve_truck.png"
-                |> toForm
+            group
+                [ Element.fittedImage 64 64 "assets/eve_truck.png"
+                    |> toForm
+                , Collage.text (Text.fromString obj.name |> Text.height 14 |> Text.color darkRed) |> move ( -12, 24 )
+                ]
                 |> move ( obj.position.x, obj.position.y )
 
 
@@ -84,8 +94,11 @@ renderTool : Tool -> Form
 renderTool obj =
     case obj.toolType of
         Repeater ->
-            Element.fittedImage 40 40 "assets/repeater2.png"
-                |> toForm
+            group
+                [ Element.fittedImage 64 64 "assets/repeater2.png"
+                    |> toForm
+                , Collage.text (Text.fromString obj.name |> Text.height 14 |> Text.color darkRed) |> move ( 0, 32 )
+                ]
                 |> move ( obj.position.x, obj.position.y )
 
 

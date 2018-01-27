@@ -189,7 +189,10 @@ updateToolPosition mousePosition state drag =
                     List.map
                         (\t ->
                             if t.id == tool.id then
-                                { t | position = mousePosition }
+                                { t
+                                    | position = mousePosition
+                                    , active = True
+                                }
                             else
                                 t
                         )
