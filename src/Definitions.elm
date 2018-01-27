@@ -47,7 +47,9 @@ type alias LevelDescription =
 
 
 type alias Boundaries =
-    Box
+    { box : Box
+    , background : String
+    }
 
 
 type alias Box =

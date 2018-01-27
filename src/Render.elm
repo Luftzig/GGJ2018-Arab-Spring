@@ -22,9 +22,10 @@ posToTuple p =
 
 renderBoundaries : Boundaries -> Form
 renderBoundaries obj =
-    rect obj.dimensions.width obj.dimensions.height
-        |> filled yellow
-        |> move (cornerToCenter obj |> posToTuple)
+    Element.image (round obj.box.dimensions.width) (round obj.box.dimensions.height) obj.background
+        |> toForm
+        --        |> filled yellow
+        |> move (cornerToCenter obj.box |> posToTuple)
 
 
 renderObstacle : Obstacle -> Form
@@ -71,10 +72,10 @@ renderCharacter obj =
 
 renderToolbox : Boundaries -> Form
 renderToolbox obj =
-    rect obj.dimensions.width 100
+    rect obj.box.dimensions.width 100
         |> filled green
-        |> move (cornerToCenter obj |> posToTuple)
-        |> moveY (-obj.dimensions.height / 2 - 50)
+        |> move (cornerToCenter obj.box |> posToTuple)
+        |> moveY (-obj.box.dimensions.height / 2 - 50)
 
 
 renderTool : Tool -> Form
@@ -93,8 +94,8 @@ renderModel model =
             (round model.canvasSize.width)
             (round model.canvasSize.height)
             (renderBoundaries model.currentLevel.boundaries
-                :: renderToolbox model.currentLevel.boundaries
                 :: List.map renderObstacle model.currentLevel.obstacles
                 ++ List.map renderCharacter model.currentLevel.characters
+                ++ [ renderToolbox model.currentLevel.boundaries ]
                 ++ List.map renderTool model.levelState.tools
             )

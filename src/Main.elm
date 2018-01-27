@@ -179,11 +179,11 @@ isValidDropPosition position model =
                 && (pos.y >= boundary.leftBottom.y)
                 && (pos.y <= boundary.leftBottom.y + boundary.dimensions.height)
 
-        collidesWith : Position -> List Boundaries -> Bool
-        collidesWith pos boundaries =
-            List.any (inBoundingBox pos) boundaries
+        collidesWith : Position -> List Box -> Bool
+        collidesWith pos box =
+            List.any (inBoundingBox pos) box
     in
-        ((inBoundingBox position model.currentLevel.boundaries)
+        ((inBoundingBox position model.currentLevel.boundaries.box)
             && (not <| collidesWith position model.currentLevel.obstacles)
         )
 
