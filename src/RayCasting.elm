@@ -237,6 +237,52 @@ cutRay s r =
                     r
 
 
+doesSegmentsCross : Segment -> Ray -> Bool
+doesSegmentsCross s r =
+    let
+        x1 =
+            vX r.source
+
+        y1 =
+            vY r.source
+
+        dx1 =
+            vX r.direction
+
+        dy1 =
+            vY r.direction
+
+        x2 =
+            vX s.source
+
+        y2 =
+            vY s.source
+
+        dx2 =
+            vX s.direction
+
+        dy2 =
+            vY s.direction
+    in
+        if (dx1 * dy2 == dx2 * dy1) && (dx2 /= 0) then
+            False
+        else
+            let
+                det =
+                    dx1 * dy2 - dx2 * dy1
+
+                t1 =
+                    (dx2 * (y1 - y2) - dy2 * (x1 - x2)) / det
+
+                t2 =
+                    (dx1 * (y2 - y1) - dy1 * (x2 - x1)) / -det
+            in
+                if (t1 > 0) && (t1 < 1) && (t2 > 0) && (t2 < 1) then
+                    True
+                else
+                    False
+
+
 raysPolygon : Ray -> Ray -> Shape
 raysPolygon r1 r2 =
     let

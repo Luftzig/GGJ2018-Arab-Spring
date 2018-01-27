@@ -64,6 +64,10 @@ type alias Position =
     }
 
 
+type alias Positioned a =
+    { a | position : Position }
+
+
 type alias Dimensions =
     { width : Width
     , height : Height
@@ -99,6 +103,10 @@ type CharacterRole
 type alias NodeParameters =
     { range : RadioRange
     }
+
+
+type alias HasNode a =
+    { a | node : NodeParameters }
 
 
 type alias RadioRange =
@@ -148,7 +156,7 @@ type alias Tool =
     { name : String
     , id : Id
     , toolType : ToolType
-    , nodeParameters : NodeParameters
+    , node : NodeParameters
     , position : Position
     , active : Bool
     }

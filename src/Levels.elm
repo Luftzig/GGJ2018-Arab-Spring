@@ -36,7 +36,7 @@ alice =
     { role = Alice
     , name = "Alice"
     , position = { x = (47 - 350), y = (-175) }
-    , node = { range = 0 }
+    , node = { range = 300 }
     }
 
 
@@ -45,7 +45,7 @@ bob =
     { role = Bob
     , name = "Bob"
     , position = { x = -300, y = 160 }
-    , node = { range = 0 }
+    , node = { range = 300 }
     }
 
 
@@ -54,7 +54,7 @@ eve =
     { role = Eve
     , name = "Eve"
     , position = { x = 0, y = 0 }
-    , node = { range = 0 }
+    , node = { range = 300 }
     }
 
 
@@ -74,8 +74,23 @@ level1Tools : ToolDefinitions
 level1Tools =
     [ { name = "Cheap Repeater"
       , toolType = Repeater
-      , nodeParameters = { range = 100 }
+      , nodeParameters = { range = 300 }
       , startPosition = { x = -250, y = -250 }
+      }
+    , { name = "Cheap Repeater"
+      , toolType = Repeater
+      , nodeParameters = { range = 300 }
+      , startPosition = { x = -250, y = -250 }
+      }
+    , { name = "Lousy Repeater"
+      , toolType = Repeater
+      , nodeParameters = { range = 200 }
+      , startPosition = { x = -200, y = -250 }
+      }
+    , { name = "Lousy Repeater"
+      , toolType = Repeater
+      , nodeParameters = { range = 200 }
+      , startPosition = { x = -200, y = -250 }
       }
     ]
 

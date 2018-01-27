@@ -10,6 +10,7 @@ import Time exposing (Time, millisecond)
 import Json.Decode as Decode
 import Levels exposing (level1)
 import List.Extra as ListE
+import Paths exposing (Edge, makeEdges)
 
 
 selectTolerance : Float
@@ -25,7 +26,7 @@ initToolsState definitions =
             , name = def.name
             , position = def.startPosition
             , toolType = def.toolType
-            , nodeParameters = def.nodeParameters
+            , node = def.nodeParameters
             , active = False
             }
         )
@@ -61,8 +62,108 @@ update msg model =
         MouseEvent event ->
             ( doMouseEvent event model, Cmd.none )
 
+        Tick dt ->
+            ( updateTime dt { model | levelState = updateLevelState model }, Cmd.none )
+
+
+updateTime : Time -> Model -> Model
+updateTime dt model =
+    let
+        levelState =
+            model.levelState
+
+        newTime =
+            levelState.time + dt
+    in
+        { model | levelState = { levelState | time = newTime } }
+
+
+updateLevelState : Model -> LevelState
+updateLevelState model =
+    let
+        state =
+            model.levelState
+    in
+        case state.progress of
+            Started ->
+                if puzzleFailed model then
+                    { state | progress = Failed }
+                else if puzzleSolved model then
+                    { state | progress = Succeeded }
+                else
+                    state
+
+            _ ->
+                state
+
+
+puzzleFailed : Model -> Bool
+puzzleFailed model =
+    let
+        sources =
+            List.filter isSource model.currentLevel.characters
+
+        adversaries =
+            List.filter isAdversary model.currentLevel.characters
+    in
+        hasPath sources adversaries model.levelState.tools model.currentLevel.obstacles
+
+
+puzzleSolved : Model -> Bool
+puzzleSolved model =
+    False
+
+
+isSource : Character -> Bool
+isSource char =
+    case char.role of
+        Alice ->
+            True
+
         _ ->
-            ( model, Cmd.none )
+            False
+
+
+isAdversary : Character -> Bool
+isAdversary char =
+    case char.role of
+        Eve ->
+            True
+
+        _ ->
+            False
+
+
+isTarget : Character -> Bool
+isTarget char =
+    case char.role of
+        Bob ->
+            True
+
+        _ ->
+            False
+
+
+hasPath : List Character -> List Character -> List Tool -> List Obstacle -> Bool
+hasPath sources targets tools obstacles =
+    let
+        --        edges =
+        --            (makeEdges obstacles tools sources)
+        --                ++ (makeEdges obstacles tools targets)
+        --                ++ (makeEdges obstacles tools tools)
+        edges =
+            []
+    in
+        False
+
+
+
+--        not <| List.isEmpty <| findPaths edges sources targets
+
+
+findPaths : List Edge -> List Character -> List Character -> List (List Edge)
+findPaths _ _ _ =
+    []
 
 
 doMouseEvent : MouseEvent -> Model -> Model
