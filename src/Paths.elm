@@ -31,7 +31,7 @@ makeEdges obstacles nodesA nodesB =
         edges =
             List.map toEdge validPairs
     in
-        Debug.log ("pairs " ++ toString pairs ++ "\nvalidPairs " ++ toString validPairs ++ "\nedges " ++ toString edges) edges
+        edges
 
 
 nodesInRange : ( Node a, Node b ) -> Bool
