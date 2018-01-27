@@ -121,8 +121,8 @@ raysToBoxCorners source box =
         List.map (\ray -> List.foldr cutRay ray walls) rawRays
 
 
-rayTracing : Position -> Box -> List Box -> List Ray
-rayTracing source boundaries obstacles =
+rayTracing : Maybe (Float,Int) -> Position -> Box -> List Box -> List Ray
+rayTracing sunParams source boundaries obstacles =
     let
         maxScale =
             boundaries.dimensions.width ^ 2 + boundaries.dimensions.height ^ 2
@@ -142,8 +142,12 @@ rayTracing source boundaries obstacles =
         extraRays =
             List.map (\ray -> { ray | direction = vectScale maxScale <| vectRotate dphi ray.direction }) rawRays
                 ++ List.map (\ray -> { ray | direction = vectScale maxScale <| vectRotate (-dphi) ray.direction }) rawRays
+
+        sunRays = case sunParams of
+            Nothing -> []
+            Just (radius, nRays) -> createSun radius nRays source
     in
-        List.map (\ray -> List.foldr cutRay ray walls) (rawRays ++ extraRays)
+        List.map (\ray -> List.foldr cutRay ray walls) (rawRays ++ extraRays ++ sunRays)
 
 
 vectAdd : Vector -> Vector -> Vector
@@ -171,7 +175,6 @@ vectRotate phi (Vector x0 y0) =
             fromPolar ( r, p + phi )
     in
         Vector x1 y1
-
 
 lineFromPoints : Position -> Position -> Line
 lineFromPoints p1 p2 =
@@ -312,11 +315,32 @@ rayAngle ray =
             )
 
 
+cutRayAtRadius : Float -> Ray -> Ray
+cutRayAtRadius radius ray =
+    let d = ray.direction
+        (r,phi) = toPolar (vX d, vY d)
+        (x,y) = fromPolar (min radius r, phi)
+    in { ray | direction = Vector x y }
+
+
+createSun : Float -> Int -> Position -> List Ray
+createSun radius nRays source =
+    let baseAngle = (2 * pi) / toFloat nRays
+        angles = List.map (\i -> baseAngle * toFloat i) (List.range 0 nRays)
+        vects = List.map (\phi -> fromPolar (radius, phi)) angles
+        src = Vector source.x source.y
+    in List.map (\(x,y) -> { source = src , direction = Vector x y }) vects
+
 
 -----------------------------------------------------------------------------------
 ---- DEMO -------------------------------------------------------------------------
 -----------------------------------------------------------------------------------
 
+maxRadius : Float
+maxRadius = 200
+
+numberOfSunRays : Int
+numberOfSunRays = 50
 
 source : Position
 source =
@@ -347,7 +371,8 @@ boxes =
 
 rays1 : List Ray
 rays1 =
-    rayTracing source boundaries boxes
+    rayTracing (Just (maxRadius, numberOfSunRays)) source boundaries boxes
+    |> List.map (cutRayAtRadius maxRadius)
 
 
 renderBox : Box -> Form
@@ -382,6 +407,7 @@ main =
                 ++ List.map (\( p1, p2 ) -> traced (solid red) (segment ( p1.x, p1.y ) ( p2.x, p2.y )))
                     (List.map pointsFromLine <| rays1)
                 ++ (List.map (\x -> x |> filled red) (raysPolygons (List.sortBy rayAngle rays1)))
+
 
 
 
