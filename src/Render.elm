@@ -5,6 +5,7 @@ import Color exposing (..)
 import Collage exposing (..)
 import Element
 import Html exposing (..)
+import Paths exposing (Edge, makeEdges)
 import Transform
 
 
@@ -87,6 +88,16 @@ renderTool obj =
                 |> move ( obj.position.x, obj.position.y )
 
 
+renderEdges : Color -> List Edge -> List Form
+renderEdges color edges =
+    List.map
+        (\e ->
+            segment ( e.start.x, e.start.y ) ( e.end.x, e.end.y )
+                |> traced (solid color)
+        )
+        edges
+
+
 renderModel : Model -> Html Msg
 renderModel model =
     Element.toHtml <|
@@ -98,4 +109,16 @@ renderModel model =
                 ++ List.map renderCharacter model.currentLevel.characters
                 ++ [ renderToolbox model.currentLevel.boundaries ]
                 ++ List.map renderTool model.levelState.tools
+                ++ (renderEdges lightGreen <|
+                        makeEdges
+                            model.currentLevel.obstacles
+                            model.currentLevel.characters
+                            (List.filter .active model.levelState.tools)
+                   )
+                ++ (renderEdges lightOrange <|
+                        makeEdges
+                            model.currentLevel.obstacles
+                            (List.filter .active model.levelState.tools)
+                            (List.filter .active model.levelState.tools)
+                   )
             )
