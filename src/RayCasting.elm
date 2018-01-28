@@ -2,6 +2,7 @@ module RayCasting exposing (..)
 
 import Collage exposing (Shape, polygon)
 import Vector exposing (..)
+import List.Extra exposing (minimumBy)
 
 
 type alias Position =
@@ -233,6 +234,11 @@ rayAngle ray =
         toPolar
             (vect2pair ray.direction)
 
+rayRadius : Ray -> Float
+rayRadius ray =
+    (\( r, _ ) -> r) <|
+        toPolar
+            (vect2pair ray.direction)
 
 cutRayAtRadius : Float -> Ray -> Ray
 cutRayAtRadius radius ray =
@@ -289,3 +295,47 @@ raysPolygons rays =
 
             Just p ->
                 p :: otherPolygons
+
+mod : Float -> Float -> Float
+mod x m = x - (toFloat <| floor (x / m)) *  m
+
+-- compareAngles : Float -> Float -> Order
+-- compareAngles phi1 phi2 =
+--     if mod (phi1 + 2*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi) && mod (phi2 + 2*pi) (2*pi) < mod (phi1 + 3*pi) (2*pi)
+--         then LT
+--         else if mod (phi2 + 2*pi) (2*pi) < mod (phi1 + 2*pi) (2*pi) && mod (phi1 + 3*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi)
+--             then GT
+--             else EQ
+
+compareAngles : Float -> Float -> Order
+compareAngles phi1 phi2 =
+    if mod (phi1 + 2*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi)
+        then LT
+        else if mod (phi1 + 2*pi) (2*pi) > mod (phi2 + 2*pi) (2*pi)
+            then GT
+            else EQ
+
+raysMidRadius : List Ray -> Float -> Float
+raysMidRadius rays angle =
+    let nearestRay1 = minimumBy (\ray -> rayAngle ray - angle) <| List.filter (\ray -> compareAngles (rayAngle ray) angle == GT ) rays
+        nearestRay2 = minimumBy (\ray -> angle - rayAngle ray) <| List.filter (\ray -> compareAngles (rayAngle ray) angle == LT ) rays
+    in Maybe.withDefault 0 <| Maybe.map2 (\r1 r2 -> max (rayRadius r1) (rayRadius r2)) nearestRay1 nearestRay2
+
+circ : Float -> Float -> (Float, Float)
+circ r phi = (r * cos phi, r * sin phi)
+
+-- circle : Float -> Shape
+-- circle r =
+--     let n = 50
+--         t = 2 * pi / n
+--         f i = circ r (t * i)
+--     in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
+
+raysCircle : List Ray -> Float -> Shape
+raysCircle rays r =
+    let n = 50
+        t = 2 * pi / n
+        angle i = t * i
+        radius i = min (raysMidRadius rays (angle i)) r
+        f i = circ (radius i) (angle i)
+    in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
