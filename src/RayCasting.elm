@@ -1,32 +1,13 @@
 module RayCasting exposing (..)
 
-import Color exposing (..)
-import Collage exposing (..)
-import Element exposing (..)
-import Html exposing (..)
-
-
--- import Debug
+import Collage exposing (Shape, polygon)
+import Vector exposing (..)
 
 
 type alias Position =
     { x : Float
     , y : Float
     }
-
-
-type Vector
-    = Vector Float Float
-
-
-vX : Vector -> Float
-vX (Vector x _) =
-    x
-
-
-vY : Vector -> Float
-vY (Vector _ y) =
-    y
 
 
 type alias Dimensions =
@@ -65,17 +46,13 @@ cornerToCenter b =
 boxCorners : Box -> List Position
 boxCorners box =
     let
-        x =
-            box.leftBottom.x
+        { x, y } =
+            box.leftBottom
 
-        y =
-            box.leftBottom.y
-
-        w =
-            box.dimensions.width
-
-        h =
-            box.dimensions.height
+        ( w, h ) =
+            ( box.dimensions.width
+            , box.dimensions.height
+            )
     in
         [ Position x y
         , Position x (y + h)
@@ -87,45 +64,63 @@ boxCorners box =
 boxWalls : Box -> List Segment
 boxWalls box =
     let
-        x =
-            box.leftBottom.x
-
-        y =
-            box.leftBottom.y
-
-        w =
-            box.dimensions.width
-
-        h =
-            box.dimensions.height
+        ( x, y, w, h ) =
+            ( box.leftBottom.x
+            , box.leftBottom.y
+            , box.dimensions.width
+            , box.dimensions.height
+            )
     in
-        [ { source = Vector x y, direction = Vector w 0 }
-        , { source = Vector x (y + h), direction = Vector 0 (-h) }
-        , { source = Vector (x + w) y, direction = Vector 0 h }
-        , { source = Vector (x + w) (y + h), direction = Vector (-w) 0 }
+        [ { source = Vector x y
+          , direction = Vector w 0
+          }
+        , { source = Vector x (y + h)
+          , direction = Vector 0 (-h)
+          }
+        , { source = Vector (x + w) y
+          , direction = Vector 0 h
+          }
+        , { source = Vector (x + w) (y + h)
+          , direction = Vector (-w) 0
+          }
         ]
 
 
 raysToBoxCorners : Position -> Box -> List Ray
 raysToBoxCorners source box =
     let
-        walls =
-            boxWalls box
-
-        corners =
-            boxCorners box
+        ( walls, corners ) =
+            ( boxWalls box
+            , boxCorners box
+            )
 
         rawRays =
             List.map (\dst -> lineFromPoints source dst) corners
     in
-        List.map (\ray -> List.foldr cutRay ray walls) rawRays
+        List.map (\ray -> List.foldr cutRayBySegment ray walls) rawRays
 
 
-rayTracing : Maybe ( Float, Int ) -> Position -> Box -> List Box -> List Ray
-rayTracing sunParams source boundaries obstacles =
+createStar : Float -> Int -> Position -> List Ray
+createStar radius nRays source =
     let
+        angles =
+            List.map (\i -> (2 * pi) * (toFloat i / toFloat nRays)) (List.range 0 nRays)
+
+        rays =
+            List.map (\phi -> fromPolar ( radius, phi )) angles
+
+        src =
+            Vector source.x source.y
+    in
+        List.map (\( x, y ) -> { source = src, direction = Vector x y }) rays
+
+
+rayCasting : Maybe ( Float, Int ) -> Position -> Box -> List Box -> List Ray
+rayCasting starParams source boundaries obstacles =
+    let
+        -- Triangle inequality
         maxScale =
-            boundaries.dimensions.width ^ 2 + boundaries.dimensions.height ^ 2
+            boundaries.dimensions.width + boundaries.dimensions.height
 
         walls =
             List.concat <| List.map boxWalls (boundaries :: obstacles)
@@ -136,55 +131,33 @@ rayTracing sunParams source boundaries obstacles =
         rawRays =
             List.map (\dst -> lineFromPoints source dst) corners
 
-        dphi =
+        -- Magic number! maybe it should be lifted?
+        extraAngle =
             0.00001
 
-        extraRays =
-            List.map (\ray -> { ray | direction = vectScale maxScale <| vectRotate dphi ray.direction }) rawRays
-                ++ List.map (\ray -> { ray | direction = vectScale maxScale <| vectRotate (-dphi) ray.direction }) rawRays
+        rotateAndScale phi ray =
+            { ray | direction = vectScale maxScale <| vectRotate phi ray.direction }
 
-        sunRays =
-            case sunParams of
+        extraRays =
+            List.map (rotateAndScale extraAngle) rawRays
+                ++ List.map (rotateAndScale (-extraAngle)) rawRays
+
+        starRays =
+            case starParams of
                 Nothing ->
                     []
 
                 Just ( radius, nRays ) ->
-                    createSun radius nRays source
+                    createStar radius nRays source
     in
-        List.map (\ray -> List.foldr cutRay ray walls) (rawRays ++ extraRays ++ sunRays)
-            |> case sunParams of
+        List.map (\ray -> List.foldr cutRayBySegment ray walls) (rawRays ++ extraRays ++ starRays)
+            |> case starParams of
                 Nothing ->
                     identity
 
+                -- Fit *all* the rays to the radius of the star.
                 Just ( radius, nRays ) ->
                     List.map (cutRayAtRadius radius)
-
-
-vectAdd : Vector -> Vector -> Vector
-vectAdd (Vector x1 y1) (Vector x2 y2) =
-    (Vector (x1 + x2) (y1 + y2))
-
-
-vectSub : Vector -> Vector -> Vector
-vectSub (Vector x1 y1) (Vector x2 y2) =
-    (Vector (x1 - x2) (y1 - y2))
-
-
-vectScale : Float -> Vector -> Vector
-vectScale s (Vector x y) =
-    Vector (s * x) (s * y)
-
-
-vectRotate : Float -> Vector -> Vector
-vectRotate phi (Vector x0 y0) =
-    let
-        ( r, p ) =
-            toPolar ( x0, y0 )
-
-        ( x1, y1 ) =
-            fromPolar ( r, p + phi )
-    in
-        Vector x1 y1
 
 
 lineFromPoints : Position -> Position -> Line
@@ -196,105 +169,84 @@ lineFromPoints p1 p2 =
 
 pointsFromLine : Line -> ( Position, Position )
 pointsFromLine l =
-    ( { x = vX l.source, y = vY l.source }
-    , let
-        p =
-            vectAdd l.source l.direction
-      in
-        { x = vX p, y = vY p }
+    ( l.source
+    , vectAdd l.source l.direction
     )
 
 
-cutRay : Segment -> Ray -> Ray
-cutRay s r =
+computeCrossParams : Line -> Line -> Maybe ( Float, Float )
+computeCrossParams l1 l2 =
     let
-        x1 =
-            vX r.source
+        ( x1, y1 ) =
+            vect2pair l1.source
 
-        y1 =
-            vY r.source
+        ( dx1, dy1 ) =
+            vect2pair l1.direction
 
-        dx1 =
-            vX r.direction
+        ( x2, y2 ) =
+            vect2pair l2.source
 
-        dy1 =
-            vY r.direction
-
-        x2 =
-            vX s.source
-
-        y2 =
-            vY s.source
-
-        dx2 =
-            vX s.direction
-
-        dy2 =
-            vY s.direction
+        ( dx2, dy2 ) =
+            vect2pair l2.direction
     in
-        if (dx1 * dy2 == dx2 * dy1) && (dx2 /= 0) then
-            r
+        if dx1 * dy2 == dx2 * dy1 then
+            Nothing
         else
             let
                 det =
                     dx1 * dy2 - dx2 * dy1
 
-                t1 =
-                    (dx2 * (y1 - y2) - dy2 * (x1 - x2)) / det
-
-                t2 =
-                    (dx1 * (y2 - y1) - dy1 * (x2 - x1)) / -det
+                ( t1, t2 ) =
+                    ( (dx2 * (y1 - y2) - dy2 * (x1 - x2)) / det
+                    , (dx1 * (y2 - y1) - dy1 * (x2 - x1)) / -det
+                    )
             in
-                if (t1 > 0) && (t1 < 1) && (t2 > 0) && (t2 < 1) then
-                    { r | direction = vectScale t1 r.direction }
-                else
-                    r
+                Just ( t1, t2 )
+
+
+cutRayBySegment : Segment -> Ray -> Ray
+cutRayBySegment s r =
+    case computeCrossParams s r of
+        Nothing ->
+            r
+
+        Just ( _, t2 ) ->
+            if doesSegmentsCross s r then
+                { r | direction = vectScale t2 r.direction }
+            else
+                r
 
 
 doesSegmentsCross : Segment -> Ray -> Bool
 doesSegmentsCross s r =
-    let
-        x1 =
-            vX r.source
-
-        y1 =
-            vY r.source
-
-        dx1 =
-            vX r.direction
-
-        dy1 =
-            vY r.direction
-
-        x2 =
-            vX s.source
-
-        y2 =
-            vY s.source
-
-        dx2 =
-            vX s.direction
-
-        dy2 =
-            vY s.direction
-    in
-        if (dx1 * dy2 == dx2 * dy1) && (dx2 /= 0) then
+    case computeCrossParams s r of
+        Nothing ->
             False
-        else
-            let
-                det =
-                    dx1 * dy2 - dx2 * dy1
 
-                t1 =
-                    (dx2 * (y1 - y2) - dy2 * (x1 - x2)) / det
+        Just ( t1, t2 ) ->
+            (t1 > 0) && (t1 < 1) && (t2 > 0) && (t2 < 1)
 
-                t2 =
-                    (dx1 * (y2 - y1) - dy1 * (x2 - x1)) / -det
-            in
-                if (t1 > 0) && (t1 < 1) && (t2 > 0) && (t2 < 1) then
-                    True
-                else
-                    False
+
+rayAngle : Ray -> Float
+rayAngle ray =
+    (\( _, phi ) -> phi) <|
+        toPolar
+            (vect2pair ray.direction)
+
+
+cutRayAtRadius : Float -> Ray -> Ray
+cutRayAtRadius radius ray =
+    let
+        d =
+            ray.direction
+
+        ( r, phi ) =
+            toPolar <| vect2pair d
+
+        ( x, y ) =
+            fromPolar ( min radius r, phi )
+    in
+        { ray | direction = Vector x y }
 
 
 raysPolygon : Ray -> Ray -> Shape
@@ -305,49 +257,28 @@ raysPolygon r1 r2 =
 
         ( _, p2 ) =
             pointsFromLine r2
-
-        sx =
-            s.x
-
-        sy =
-            s.y
-
-        rx1 =
-            p1.x
-
-        ry1 =
-            p1.y
-
-        rx2 =
-            p2.x
-
-        ry2 =
-            p2.y
     in
-        polygon [ ( sx, sy ), ( rx1, ry1 ), ( rx2, ry2 ) ]
-
-
-raysPolygonsInternal : List Ray -> List Shape
-raysPolygonsInternal rays =
-    case rays of
-        [] ->
-            []
-
-        [ r ] ->
-            []
-
-        r1 :: r2 :: rs ->
-            raysPolygon r1 r2 :: raysPolygonsInternal (r2 :: rs)
+        polygon [ ( s.x, s.y ), ( p1.x, p1.y ), ( p2.x, p2.y ) ]
 
 
 raysPolygons : List Ray -> List Shape
 raysPolygons rays =
     let
-        hd =
-            List.head rays
+        raysPolygonsInternal rays =
+            case rays of
+                [] ->
+                    []
 
-        lt =
-            List.head (List.reverse rays)
+                [ r ] ->
+                    []
+
+                r1 :: r2 :: rs ->
+                    raysPolygon r1 r2 :: raysPolygonsInternal (r2 :: rs)
+
+        ( hd, lt ) =
+            ( List.head rays
+            , List.head (List.reverse rays)
+            )
 
         otherPolygons =
             raysPolygonsInternal rays
@@ -358,136 +289,3 @@ raysPolygons rays =
 
             Just p ->
                 p :: otherPolygons
-
-
-rayAngle : Ray -> Float
-rayAngle ray =
-    (\( _, phi ) -> phi) <|
-        toPolar
-            (let
-                d =
-                    ray.direction
-             in
-                ( vX d, vY d )
-            )
-
-
-cutRayAtRadius : Float -> Ray -> Ray
-cutRayAtRadius radius ray =
-    let
-        d =
-            ray.direction
-
-        ( r, phi ) =
-            toPolar ( vX d, vY d )
-
-        ( x, y ) =
-            fromPolar ( min radius r, phi )
-    in
-        { ray | direction = Vector x y }
-
-
-createSun : Float -> Int -> Position -> List Ray
-createSun radius nRays source =
-    let
-        baseAngle =
-            (2 * pi) / toFloat nRays
-
-        angles =
-            List.map (\i -> baseAngle * toFloat i) (List.range 0 nRays)
-
-        vects =
-            List.map (\phi -> fromPolar ( radius, phi )) angles
-
-        src =
-            Vector source.x source.y
-    in
-        List.map (\( x, y ) -> { source = src, direction = Vector x y }) vects
-
-
-
------------------------------------------------------------------------------------
----- DEMO -------------------------------------------------------------------------
------------------------------------------------------------------------------------
-
-
-maxRadius : Float
-maxRadius =
-    200
-
-
-numberOfSunRays : Int
-numberOfSunRays =
-    50
-
-
-source : Position
-source =
-    Position -200 50
-
-
-
--- Position 150 145
-
-
-boundaries : Box
-boundaries =
-    { leftBottom = { x = -250, y = -250 }
-    , dimensions = { width = 500, height = 500 }
-    }
-
-
-boxes : List Box
-boxes =
-    [ { leftBottom = { x = -50, y = -75 }
-      , dimensions = { width = 100, height = 150 }
-      }
-    , { leftBottom = { x = -150, y = 75 }
-      , dimensions = { width = 10, height = 15 }
-      }
-    ]
-
-
-rays1 : List Ray
-rays1 =
-    rayTracing (Just ( maxRadius, numberOfSunRays )) source boundaries boxes
-        |> List.map (cutRayAtRadius maxRadius)
-
-
-renderBox : Box -> Form
-renderBox box =
-    let
-        p =
-            cornerToCenter box
-
-        x =
-            p.x
-
-        y =
-            p.y
-
-        w =
-            box.dimensions.width
-
-        h =
-            box.dimensions.height
-    in
-        rect w h |> filled blue |> move ( x, y )
-
-
-main : Html msg
-main =
-    toHtml <|
-        collage 500 500 <|
-            [ circle 10 |> filled red |> move ( source.x, source.y )
-            ]
-                ++ List.map renderBox boxes
-                -- ++ List.map (\p -> circle 10 |> filled red |> move (p.x, p.y)) (boxCorners box)
-                ++ List.map (\( p1, p2 ) -> traced (solid red) (segment ( p1.x, p1.y ) ( p2.x, p2.y )))
-                    (List.map pointsFromLine <| rays1)
-                ++ (List.map (\x -> x |> filled red) (raysPolygons (List.sortBy rayAngle rays1)))
-
-
-
--- ++ case ray2coords of
---     (p1, p2) -> [traced (solid red) (segment (p1.x, p1.y) (p2.x, p2.y))]

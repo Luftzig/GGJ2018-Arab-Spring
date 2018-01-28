@@ -6,7 +6,7 @@ import Collage exposing (..)
 import Element
 import Html exposing (..)
 import Paths exposing (Edge, makeEdges)
-import RayCasting exposing (rayAngle, rayTracing, raysPolygons)
+import RayCasting exposing (rayAngle, rayCasting, raysPolygons)
 import Text
 import Transform
 
@@ -121,7 +121,7 @@ renderAreasOfEffect boundaries obstacles color nodes =
 
 renderRays : Boundaries -> List Obstacle -> Color -> Node a -> List Form
 renderRays boundaries obstacles color node =
-    rayTracing (Just ( node.node.range, 50 )) node.position boundaries.box obstacles
+    rayCasting (Just ( node.node.range, 50 )) node.position boundaries.box obstacles
         |> List.sortBy rayAngle
         |> raysPolygons
         |> List.map (filled color >> alpha 0.5)

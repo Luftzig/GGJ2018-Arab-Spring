@@ -2,7 +2,8 @@ module Paths exposing (Edge, makeEdges)
 
 import Definitions exposing (HasNode, Node, Obstacle, Position, Positioned)
 import List.Extra as ListE
-import RayCasting exposing (Vector, boxWalls, doesSegmentsCross, vectSub)
+import RayCasting exposing (boxWalls, doesSegmentsCross)
+import Vector exposing (Vector, vectSub)
 
 
 type alias Edge =
@@ -50,10 +51,10 @@ nodesInSight obstacles ( node1, node2 ) =
             List.concatMap boxWalls obstacles
 
         vec1 =
-            RayCasting.Vector node1.position.x node1.position.y
+            Vector.Vector node1.position.x node1.position.y
 
         vec2 =
-            RayCasting.Vector node2.position.x node2.position.y
+            Vector.Vector node2.position.x node2.position.y
 
         nodesSegment =
             { source = vec1, direction = vectSub vec2 vec1 }
