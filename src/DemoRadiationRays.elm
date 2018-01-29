@@ -43,7 +43,9 @@ view model = toHtml <|
     collage 500 500 <|
         ( List.range 0 nCircles |> List.map ( \i ->
             let r = computeRadius maxRadius nCircles model.time i
-            in raysCircle (List.sortBy rayAngle rays1) r |> outlined (solid (rgba 255 0 0 (1 - r / maxRadius))) |> move ( source.x, source.y ) )
+            in
+            raysCircles (List.sortBy rayAngle rays1) r |> List.map (outlined (solid (rgba 255 0 0 (1 - r / maxRadius))) >> move ( source.x, source.y ) ) |> group )
+            -- raysCircle (List.sortBy rayAngle rays1) r |> outlined (solid (rgba 255 0 0 (1 - r / maxRadius))) |> move ( source.x, source.y ) )
         )
             ++ List.map renderBox boxes
             -- ++ List.map (\p -> circle 10 |> filled red |> move (p.x, p.y)) (boxCorners box)

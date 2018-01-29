@@ -339,3 +339,22 @@ raysCircle rays r =
         radius i = min (raysMidRadius rays (angle i)) r
         f i = circ (radius i) (angle i)
     in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
+
+
+raysPairCircle : Ray -> Ray -> Float -> Shape
+raysPairCircle ray1 ray2 r =
+    let n = 50
+        mn = min (rayAngle ray1) (rayAngle ray2)
+        mx = max (rayAngle ray1) (rayAngle ray2)
+        angleDiff = mx - mn -- mod (mx - mn + 2*pi) (2*pi)
+        t = angleDiff / n
+        angle i = mn + t * i
+        radius i = min (max (rayRadius ray1) (rayRadius ray2)) r
+        f i = circ (radius i) (angle i)
+    in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
+
+raysCircles : List Ray -> Float -> List Shape
+raysCircles rays0 r = case rays0 of
+    []  ->  []
+    [_]  ->  []
+    ray1::ray2::rays  ->  raysPairCircle ray1 ray2 r :: raysCircles (ray2::rays) r
