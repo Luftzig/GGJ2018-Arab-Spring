@@ -2,7 +2,6 @@ module RayCasting exposing (..)
 
 import Collage exposing (Shape, polygon)
 import Vector exposing (..)
-import List.Extra exposing (minimumBy)
 
 
 type alias Position =
@@ -151,14 +150,16 @@ rayCasting starParams source boundaries obstacles =
                 Just ( radius, nRays ) ->
                     createStar radius nRays source
     in
-        List.map (\ray -> List.foldr cutRayBySegment ray walls) (rawRays ++ extraRays ++ starRays)
-            |> case starParams of
-                Nothing ->
-                    identity
+        List.sortBy rayAngle
+            (List.map (\ray -> List.foldr cutRayBySegment ray walls) (rawRays ++ extraRays ++ starRays)
+                |> case starParams of
+                    Nothing ->
+                        identity
 
-                -- Fit *all* the rays to the radius of the star.
-                Just ( radius, nRays ) ->
-                    List.map (cutRayAtRadius radius)
+                    -- Fit *all* the rays to the radius of the star.
+                    Just ( radius, nRays ) ->
+                        List.map (cutRayAtRadius radius)
+            )
 
 
 lineFromPoints : Position -> Position -> Line
@@ -234,11 +235,22 @@ rayAngle ray =
         toPolar
             (vect2pair ray.direction)
 
+
 rayRadius : Ray -> Float
 rayRadius ray =
     (\( r, _ ) -> r) <|
         toPolar
             (vect2pair ray.direction)
+
+
+rotateRay : Float -> Ray -> Ray
+rotateRay angle ray =
+    let
+        ( r, phi ) =
+            toPolar (vect2pair ray.direction)
+    in
+        { ray | direction = pair2vect <| fromPolar ( r, phi + angle ) }
+
 
 cutRayAtRadius : Float -> Ray -> Ray
 cutRayAtRadius radius ray =
@@ -272,14 +284,11 @@ raysPolygons rays =
     let
         raysPolygonsInternal rays =
             case rays of
-                [] ->
-                    []
-
-                [ r ] ->
-                    []
-
                 r1 :: r2 :: rs ->
                     raysPolygon r1 r2 :: raysPolygonsInternal (r2 :: rs)
+
+                _ ->
+                    []
 
         ( hd, lt ) =
             ( List.head rays
@@ -296,33 +305,12 @@ raysPolygons rays =
             Just p ->
                 p :: otherPolygons
 
-mod : Float -> Float -> Float
-mod x m = x - (toFloat <| floor (x / m)) *  m
 
--- compareAngles : Float -> Float -> Order
--- compareAngles phi1 phi2 =
---     if mod (phi1 + 2*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi) && mod (phi2 + 2*pi) (2*pi) < mod (phi1 + 3*pi) (2*pi)
---         then LT
---         else if mod (phi2 + 2*pi) (2*pi) < mod (phi1 + 2*pi) (2*pi) && mod (phi1 + 3*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi)
---             then GT
---             else EQ
+circ : Float -> Float -> ( Float, Float )
+circ r phi =
+    ( r * cos phi, r * sin phi )
 
-compareAngles : Float -> Float -> Order
-compareAngles phi1 phi2 =
-    if mod (phi1 + 2*pi) (2*pi) < mod (phi2 + 2*pi) (2*pi)
-        then LT
-        else if mod (phi1 + 2*pi) (2*pi) > mod (phi2 + 2*pi) (2*pi)
-            then GT
-            else EQ
 
-raysMidRadius : List Ray -> Float -> Float
-raysMidRadius rays angle =
-    let nearestRay1 = minimumBy (\ray -> rayAngle ray - angle) <| List.filter (\ray -> compareAngles (rayAngle ray) angle == GT ) rays
-        nearestRay2 = minimumBy (\ray -> angle - rayAngle ray) <| List.filter (\ray -> compareAngles (rayAngle ray) angle == LT ) rays
-    in Maybe.withDefault 0 <| Maybe.map2 (\r1 r2 -> max (rayRadius r1) (rayRadius r2)) nearestRay1 nearestRay2
-
-circ : Float -> Float -> (Float, Float)
-circ r phi = (r * cos phi, r * sin phi)
 
 -- circle : Float -> Shape
 -- circle r =
@@ -331,30 +319,57 @@ circ r phi = (r * cos phi, r * sin phi)
 --         f i = circ r (t * i)
 --     in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
 
-raysCircle : List Ray -> Float -> Shape
-raysCircle rays r =
-    let n = 50
-        t = 2 * pi / n
-        angle i = t * i
-        radius i = min (raysMidRadius rays (angle i)) r
-        f i = circ (radius i) (angle i)
-    in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
+
+raysPairCircle : Float -> Ray -> Ray -> Shape
+raysPairCircle r ray1 ray2 =
+    let
+        n =
+            10
+
+        mn =
+            rayAngle ray1
+
+        -- min (rayAngle ray1) (rayAngle ray2)
+        mx =
+            rayAngle ray2
+
+        -- max (rayAngle ray1) (rayAngle ray2)
+        dot ( x1, y1 ) ( x2, y2 ) =
+            x1 * x2 + y1 * y2
+
+        angleDiff =
+            acos (dot (fromPolar ( 1, mn )) (fromPolar ( 1, mx )))
+
+        t =
+            angleDiff / n
+
+        angle i =
+            mn + t * i
+
+        radius i =
+            min (max (rayRadius ray1) (rayRadius ray2)) r
+
+        f i =
+            circ (radius i) (angle i)
+    in
+        polygon <| List.map (f << toFloat) <| List.range 0 (n - 1)
 
 
-raysPairCircle : Ray -> Ray -> Float -> Shape
-raysPairCircle ray1 ray2 r =
-    let n = 50
-        mn = min (rayAngle ray1) (rayAngle ray2)
-        mx = max (rayAngle ray1) (rayAngle ray2)
-        angleDiff = mx - mn -- mod (mx - mn + 2*pi) (2*pi)
-        t = angleDiff / n
-        angle i = mn + t * i
-        radius i = min (max (rayRadius ray1) (rayRadius ray2)) r
-        f i = circ (radius i) (angle i)
-    in polygon <| List.map (f << toFloat) <| List.range 0 (n-1)
+raysCircles : Float -> List Ray -> List Shape
+raysCircles r rays0 =
+    let
+        raysCirclesInternal rays =
+            case rays of
+                ray1 :: ray2 :: moreRays ->
+                    raysPairCircle r ray1 ray2 :: raysCirclesInternal (ray2 :: moreRays)
 
-raysCircles : List Ray -> Float -> List Shape
-raysCircles rays0 r = case rays0 of
-    []  ->  []
-    [_]  ->  []
-    ray1::ray2::rays  ->  raysPairCircle ray1 ray2 r :: raysCircles (ray2::rays) r
+                _ ->
+                    []
+    in
+        raysCirclesInternal rays0
+            ++ case ( rays0, List.reverse rays0 ) of
+                ( ray1 :: _, yar1 :: _ ) ->
+                    [ raysPairCircle r yar1 ray1 ]
+
+                _ ->
+                    []
