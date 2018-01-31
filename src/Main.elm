@@ -62,20 +62,17 @@ update msg model =
         MouseEvent event ->
             ( doMouseEvent event model, Cmd.none )
 
-        Tick dt ->
-            ( updateTime dt { model | levelState = updateLevelState model }, Cmd.none )
+        Tick time ->
+            ( updateTime time { model | levelState = updateLevelState model }, Cmd.none )
 
 
 updateTime : Time -> Model -> Model
-updateTime dt model =
+updateTime time model =
     let
         levelState =
             model.levelState
-
-        newTime =
-            levelState.time + dt
     in
-        { model | levelState = { levelState | time = newTime } }
+        { model | levelState = { levelState | time = time } }
 
 
 updateLevelState : Model -> LevelState

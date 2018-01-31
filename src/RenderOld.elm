@@ -6,7 +6,7 @@ import Collage exposing (..)
 import Element
 import Html exposing (..)
 import Paths exposing (Edge, makeEdges)
-import RayCasting exposing (rayAngle, rayCasting, raysPolygons, raysCircles)
+import RayCasting exposing (rayAngle, rayCasting, raysPolygons)
 import Text
 import Transform
 
@@ -112,52 +112,19 @@ renderEdges color edges =
         edges
 
 
-renderAreasOfEffect : Model -> Color -> List (Node a) -> List Form
-renderAreasOfEffect model color nodes =
+renderAreasOfEffect : Boundaries -> List Obstacle -> Color -> List (Node a) -> List Form
+renderAreasOfEffect boundaries obstacles color nodes =
     nodes
-        |> List.map (renderRays model color)
+        |> List.map (renderRays boundaries obstacles color)
         |> List.concat
 
 
-mod : Float -> Float -> Float
-mod x m =
-    x - (toFloat <| floor (x / m)) * m
-
-nCircles : Int
-nCircles =
-    5
-
-computeRadius : Float -> Int -> Float -> Int -> Float
-computeRadius maxRadius nCircles t i =
-    (mod (toFloat i * maxRadius / (toFloat nCircles) + (t / 20)) maxRadius)
-
--- fadingColor : Color -> Float -> Float -> Color
--- fadingColor clr maxRadius r = alpha (1 - r / maxRadius) clr
-
-
-renderRays : Model -> Color -> Node a -> List Form
-renderRays model color node =
-    List.range 0 nCircles
-        |> List.map
-            (\i ->
-                let
-                    boundaries = model.currentLevel.boundaries
-                    obstacles = model.currentLevel.obstacles
-                    r =
-                        computeRadius node.node.range nCircles model.levelState.time i
-                    rays = rayCasting (Just ( node.node.range, 5 )) node.position boundaries.box obstacles
-                in
-                    (raysCircles r rays)
-                        |> List.map
-                            ( outlined (solid color)
-                            >> move ( node.position.x, node.position.y )
-                            >> alpha (1 - r / node.node.range)
-                            )
-                        |> group
-            )
-    -- rayCasting (Just ( node.node.range, 50 )) node.position boundaries.box obstacles
-    --     |> raysPolygons
-    --     |> List.map (filled color >> alpha 0.5)
+renderRays : Boundaries -> List Obstacle -> Color -> Node a -> List Form
+renderRays boundaries obstacles color node =
+    rayCasting (Just ( node.node.range, 50 )) node.position boundaries.box obstacles
+        |> List.sortBy rayAngle
+        |> raysPolygons
+        |> List.map (filled color >> alpha 0.5)
 
 
 renderModel : Model -> Html Msg
@@ -167,16 +134,22 @@ renderModel model =
             (round model.canvasSize.width)
             (round model.canvasSize.height)
             (renderBoundaries model.currentLevel.boundaries
-                :: renderAreasOfEffect model
+                :: List.map renderObstacle model.currentLevel.obstacles
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
                     lightOrange
                     (List.filter .active model.levelState.tools)
-                ++ renderAreasOfEffect model
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
                     lightPurple
                     (List.filter isAdversary model.currentLevel.characters)
-                ++ renderAreasOfEffect model
+                ++ renderAreasOfEffect
+                    model.currentLevel.boundaries
+                    model.currentLevel.obstacles
                     lightBlue
                     (List.filter (not << isAdversary) model.currentLevel.characters)
-                ++ List.map renderObstacle model.currentLevel.obstacles
                 ++ List.map renderCharacter model.currentLevel.characters
                 ++ [ renderToolbox model.currentLevel.boundaries ]
                 ++ List.map renderTool model.levelState.tools

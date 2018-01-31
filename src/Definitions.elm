@@ -1,7 +1,6 @@
 module Definitions exposing (..)
 
 import Time exposing (Time)
-import Time exposing (Time)
 import Mouse as Mouse
 
 
